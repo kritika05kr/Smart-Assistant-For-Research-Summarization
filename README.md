@@ -68,8 +68,8 @@ Before you begin, ensure you have the following installed:
 - Clone the Repository:
     - Open your terminal or command prompt and run:
 
-    ```
-    git clone https://github.com/kritika05kr/Image-Captioning.git
+    ```bash
+    git clone https://github.com/kritika05kr/Smart-Assistant-For-Research-Summarization.git
     ```
 
 ---
