@@ -7,25 +7,38 @@ from PyPDF2 import PdfReader
 import google.generativeai as genai
 
 # --- Configuration ---
-API_KEY = "AIzaSyB-8SjBKkb3aEjGmNcXTacs5GShzAgy-4U"  # Add your Gemini API Key here
+
+# Your Gemini API key goes here.
+API_KEY = ""  # Add your Gemini API Key here
 genai.configure(api_key=API_KEY)
 
+# Initialize Flask app
 app = Flask(__name__)
+# Enable CORS so frontend apps can call your backend without CORS errors
 CORS(app)
 
+# Directory where uploaded files will be stored
 UPLOAD_FOLDER = 'uploads'
 if not os.path.exists(UPLOAD_FOLDER):
     os.makedirs(UPLOAD_FOLDER)
 
+# Configure Flask settings
 app.config['UPLOAD_FOLDER'] = UPLOAD_FOLDER
-app.config['MAX_CONTENT_LENGTH'] = 16 * 1024 * 1024  # Max 16MB
+app.config['MAX_CONTENT_LENGTH'] = 16 * 1024 * 1024  # Max upload size = 16MB
 
+# Allowed file extensions for upload
 ALLOWED_EXTENSIONS = {'pdf', 'txt'}
 
 def allowed_file(filename):
+    """
+    Check if a file has an allowed extension (PDF or TXT).
+    """
     return '.' in filename and filename.rsplit('.', 1)[1].lower() in ALLOWED_EXTENSIONS
 
 def extract_text_from_pdf(pdf_path):
+    """
+    Extracts text from a PDF file, annotating each line with page and line numbers.
+    """
     text = ""
     try:
         with open(pdf_path, 'rb') as file:
@@ -45,6 +58,9 @@ def extract_text_from_pdf(pdf_path):
     return text
 
 def extract_text_from_txt(txt_path):
+    """
+    Extracts text from a plain text file, annotating each line with its line number.
+    """
     text = ""
     try:
         with open(txt_path, 'r', encoding='utf-8') as file:
@@ -60,15 +76,20 @@ def extract_text_from_txt(txt_path):
         return None
     return text
 
+# Dictionary to store extracted text of uploaded documents
 document_content = {}
 
 def get_gemini_response(prompt, generation_config=None):
+    """
+    Sends a prompt to Gemini AI and returns the generated text response.
+    """
     try:
         model = genai.GenerativeModel('gemini-2.0-flash')
         if generation_config:
             response = model.generate_content(prompt, generation_config=generation_config)
         else:
             response = model.generate_content(prompt)
+
         if response.candidates and response.candidates[0].content.parts:
             return response.candidates[0].content.parts[0].text
         return None
@@ -78,6 +99,12 @@ def get_gemini_response(prompt, generation_config=None):
 
 @app.route('/upload', methods=['POST'])
 def upload_document():
+    """
+    Handles file uploads.
+    - Saves the file to the server
+    - Extracts text from PDF or TXT
+    - Generates a summary of the document using Gemini AI
+    """
     if 'file' not in request.files:
         return jsonify({'error': 'No file part'}), 400
 
@@ -100,7 +127,12 @@ def upload_document():
             return jsonify({'error': 'Failed to extract text from document'}), 500
 
         document_content[filename] = extracted_text
-        summary_prompt = f"Summarize the following document in no more than 150 words. Focus on the main points. Document content: {extracted_text}"
+
+        # Prompt Gemini AI to summarize the document
+        summary_prompt = (
+            f"Summarize the following document in no more than 150 words. "
+            f"Focus on the main points. Document content: {extracted_text}"
+        )
         summary = get_gemini_response(summary_prompt)
 
         if summary:
@@ -112,6 +144,11 @@ def upload_document():
 
 @app.route('/ask', methods=['POST'])
 def ask_question():
+    """
+    Handles user questions about an uploaded document.
+    - User sends a question and document name
+    - Gemini AI generates an answer based on document content
+    """
     data = request.get_json()
     query = data.get('query')
     document_name = data.get('documentName')
@@ -123,7 +160,11 @@ def ask_question():
     if not doc_text:
         return jsonify({'error': 'Document content not found. Please upload the document again.'}), 404
 
-    prompt = f"Based on the following document, answer the question: '{query}'. Provide justification using [Page X, Line Y] or [Line Y] markers.\n\nDocument content: {doc_text}"
+    prompt = (
+        f"Based on the following document, answer the question: '{query}'. "
+        f"Provide justification using [Page X, Line Y] or [Line Y] markers.\n\n"
+        f"Document content: {doc_text}"
+    )
     answer = get_gemini_response(prompt)
 
     if answer:
@@ -133,6 +174,11 @@ def ask_question():
 
 @app.route('/challenge', methods=['POST'])
 def generate_challenge_questions():
+    """
+    Generates 3 challenge questions based on the uploaded document.
+    - Questions should be logic or comprehension based
+    - Returned as a JSON array
+    """
     data = request.get_json()
     document_name = data.get('documentName')
 
@@ -143,8 +189,13 @@ def generate_challenge_questions():
     if not doc_text:
         return jsonify({'error': 'Document content not found.'}), 404
 
-    prompt = f"Generate three distinct logic-based or comprehension-focused questions based on the following document. Provide them as a JSON array: [\"Q1\", \"Q2\", \"Q3\"]\n\nDocument content: {doc_text}"
+    prompt = (
+        f"Generate three distinct logic-based or comprehension-focused questions "
+        f"based on the following document. Provide them as a JSON array: "
+        f"[\"Q1\", \"Q2\", \"Q3\"]\n\nDocument content: {doc_text}"
+    )
 
+    # Ask Gemini for structured JSON output
     generation_config = {
         "response_mime_type": "application/json",
         "response_schema": {
@@ -167,6 +218,12 @@ def generate_challenge_questions():
 
 @app.route('/evaluate_challenge', methods=['POST'])
 def evaluate_challenge_answers():
+    """
+    Evaluates user answers to challenge questions.
+    - For each answer, Gemini provides:
+      - Verdict (Correct, Partially Correct, Incorrect)
+      - Justification based on document content
+    """
     data = request.get_json()
     document_name = data.get('documentName')
     questions = data.get('questions')
@@ -182,11 +239,17 @@ def evaluate_challenge_answers():
     feedback = {}
     for index, question in enumerate(questions):
         user_answer = user_answers.get(str(index), '')
-        prompt = f"Based on the document, evaluate if this answer: '{user_answer}' is correct for the question: '{question}'. Give a verdict (Correct/Partially Correct/Incorrect) and justify using [Page X, Line Y] or [Line Y] markers.\n\nDocument content: {doc_text}"
+        prompt = (
+            f"Based on the document, evaluate if this answer: '{user_answer}' "
+            f"is correct for the question: '{question}'. Give a verdict "
+            f"(Correct/Partially Correct/Incorrect) and justify using [Page X, Line Y] or [Line Y] markers.\n\n"
+            f"Document content: {doc_text}"
+        )
         evaluation = get_gemini_response(prompt)
         feedback[index] = evaluation or "Evaluation not available."
 
     return jsonify({'feedback': feedback}), 200
 
+# This block starts the Flask server if the script is run directly.
 if __name__ == '__main__':
     app.run(debug=True, port=5000)
