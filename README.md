@@ -1,4 +1,4 @@
-## Smart Research Assistant
+## Smart Assistant for Research Summarization
 This project develops an AI assistant capable of understanding and reasoning through user-uploaded documents (PDF or TXT format). It goes beyond basic summarization and keyword search by providing contextual question answering and logic-based question generation, with all responses justified by document references.
 
 
@@ -71,9 +71,7 @@ Before you begin, ensure you have the following installed:
     ```
     git clone https://github.com/kritika05kr/Image-Captioning.git
     ```
-    ```
-    cd smart-research-assistant
-    ```
+
 ---
 ### Backend Setup:
 ---
@@ -145,28 +143,6 @@ dependencies:
 ```
 npm install
 ```
-
-### Important: Update public/index.html
-Ensure your frontend/public/index.html file includes the Tailwind CSS CDN and Google Fonts link in the <head> section. This is crucial for styling.
-
-<!DOCTYPE html>
-<html lang="en">
-<head>
-    <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Smart Research Assistant</title>
-    <!-- Tailwind CSS CDN -->
-    <script src="https://cdn.tailwindcss.com"></script>
-    <!-- Inter font -->
-    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;600;700&display=swap" rel="stylesheet" />
-</head>
-<body>
-    <div id="root"></div>
-</body>
-</html>
-
-Make sure these lines are removed from frontend/src/App.js if they are present there.
----
 
 
 ### Running the Application
