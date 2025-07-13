@@ -69,7 +69,7 @@ Before you begin, ensure you have the following installed:
     - Open your terminal or command prompt and run:
 
     ```
-    git clone https://github.com/uk-zash/Smart-Research-Assistant
+    git clone https://github.com/kritika05kr/Image-Captioning.git
     ```
     ```
     cd smart-research-assistant
