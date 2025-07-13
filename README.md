@@ -1,7 +1,11 @@
 ## Smart Research Assistant
 This project develops an AI assistant capable of understanding and reasoning through user-uploaded documents (PDF or TXT format). It goes beyond basic summarization and keyword search by providing contextual question answering and logic-based question generation, with all responses justified by document references.
 
----
+
+##  Demo Video
+
+[![Watch the demo](https://img.youtube.com/vi/mRiLq17V7sc/0.jpg)](https://www.youtube.com/watch?v=mRiLq17V7sc)
+
 
 ### Features
 ---
